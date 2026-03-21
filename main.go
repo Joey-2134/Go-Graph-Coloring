@@ -8,43 +8,43 @@ import (
 
 func main() {
 	const (
-		NUM_NODES          = 50
-		PROB_OF_CONNECTION = 0.8
-		SEED               = 123456
-		MAX_STEPS          = 100
-		OUT_CSV_PATH       = "conflicts.csv"
+		NUM_NODES = 5000
+		SEED      = 123456
+		MAX_STEPS = 1000
 	)
 
 	rng := rand.New(rand.NewSource(SEED))
+	P_VALUES := []float64{0.1, 0.3, 0.6, 0.8, 0.95}
 
-	graph := utils.GenerateGraph(NUM_NODES, PROB_OF_CONNECTION, rng)
-	numColours := utils.MaxDegree(graph) + 1
-	colours := utils.GenerateColours(NUM_NODES, numColours, rng)
+	for _, p := range P_VALUES {
+		outCSVPath := fmt.Sprintf("conflicts_p_%.2f.csv", p)
+		graph := utils.GenerateGraph(NUM_NODES, p, rng)
+		numColours := utils.MaxDegree(graph) + 1
+		colours := utils.GenerateColours(NUM_NODES, numColours, rng)
+		conflictsPerIteration := make([]int, 0, MAX_STEPS)
 
-	conflictsPerIteration := make([]int, 0, MAX_STEPS)
+		for step := range MAX_STEPS {
+			conflicts := utils.CountConflicts(graph, colours)
+			conflictsPerIteration = append(conflictsPerIteration, conflicts)
+			if conflicts == 0 {
+				fmt.Println("No conflicts found after ", step, " steps")
+				break
+			}
 
-	for step := range MAX_STEPS {
-		conflicts := utils.CountConflicts(graph, colours)
-		conflictsPerIteration = append(conflictsPerIteration, conflicts)
-		if conflicts == 0 {
-			fmt.Println("No conflicts found after ", step, " steps")
-			break
-		}
+			snapshot := make([]int, NUM_NODES)
+			copy(snapshot, colours)
 
-		snapshot := make([]int, NUM_NODES)
-		copy(snapshot, colours)
-
-		for node := range NUM_NODES {
-			if utils.IsConflicted(graph, snapshot, node) {
-				colours[node] = utils.PickColour(graph, snapshot, node, numColours, rng)
+			for node := range NUM_NODES {
+				if utils.IsConflicted(graph, snapshot, node) {
+					colours[node] = utils.PickColour(graph, snapshot, node, numColours, rng)
+				}
 			}
 		}
-	}
 
-	if err := utils.WriteConflictsCSV(OUT_CSV_PATH, conflictsPerIteration); err != nil {
-		panic(err)
-	}
+		if err := utils.WriteConflictsCSV(outCSVPath, conflictsPerIteration); err != nil {
+			panic(err)
+		}
 
-	fmt.Println("Colours: ", colours)
-	fmt.Println("Wrote conflicts CSV to: ", OUT_CSV_PATH)
+		fmt.Println("Wrote conflicts CSV to:", outCSVPath)
+	}
 }
