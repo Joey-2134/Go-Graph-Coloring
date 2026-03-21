@@ -8,19 +8,19 @@ import (
 
 func main() {
 	const (
-		NUM_NODES = 5000
-		SEED      = 123456
-		MAX_STEPS = 1000
+		NUM_NODES   = 5000
+		SEED        = 123456
+		MAX_STEPS   = 1000
+		NUM_COLOURS = 750
 	)
 
 	rng := rand.New(rand.NewSource(SEED))
 	P_VALUES := []float64{0.1, 0.3, 0.6, 0.8, 0.95}
 
 	for _, p := range P_VALUES {
-		outCSVPath := fmt.Sprintf("conflicts_p_%.2f.csv", p)
+		outCSVPath := fmt.Sprintf("conflicts_p_%.2f_k_%d.csv", p, NUM_COLOURS)
 		graph := utils.GenerateGraph(NUM_NODES, p, rng)
-		numColours := utils.MaxDegree(graph) + 1
-		colours := utils.GenerateColours(NUM_NODES, numColours, rng)
+		colours := utils.GenerateColours(NUM_NODES, NUM_COLOURS, rng)
 		conflictsPerIteration := make([]int, 0, MAX_STEPS)
 
 		for step := range MAX_STEPS {
@@ -36,7 +36,7 @@ func main() {
 
 			for node := range NUM_NODES {
 				if utils.IsConflicted(graph, snapshot, node) {
-					colours[node] = utils.PickColour(graph, snapshot, node, numColours, rng)
+					colours[node] = utils.PickColour(graph, snapshot, node, NUM_COLOURS, rng)
 				}
 			}
 		}

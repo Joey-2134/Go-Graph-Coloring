@@ -5,6 +5,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
+K = 750
 
 def load_run_csv(path: Path):
     iterations: list[int] = []
@@ -19,18 +20,20 @@ def load_run_csv(path: Path):
     return iterations, conflicts
 
 
-def load_all_runs(pattern: str = "conflicts_p_*.csv"):
+def load_all_runs():
+    pattern = f"conflicts_p_*_k_{K}.csv"
     runs: list[tuple[str, list[int], list[float]]] = []
     for path in sorted(Path(".").glob(pattern)):
-        p_label = path.stem.replace("conflicts_p_", "p=")
+        stem = path.stem
+        suffix = f"_k_{K}"
+        p_part = stem.removeprefix("conflicts_p_").removesuffix(suffix)
+        p_label = f"p={p_part}"
         iterations, conflicts = load_run_csv(path)
         runs.append((p_label, iterations, conflicts))
     return runs
 
 
 def plot(runs):
-    if not runs:
-        raise FileNotFoundError("No CSV files found matching conflicts_p_*.csv")
 
     plt.figure(figsize=(8, 4.5))
     for p_label, iterations, conflicts in runs:
@@ -43,7 +46,7 @@ def plot(runs):
     plt.legend()
 
     plt.tight_layout()
-    plt.savefig("conflicts.png", bbox_inches="tight")
+    plt.savefig(f"conflicts_k_{K}.png", bbox_inches="tight")
     plt.close()
 
 
